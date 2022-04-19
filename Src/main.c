@@ -127,6 +127,12 @@ int main(void)
   
   //FLASH to SDRAM
   QspiReadData(0, 800 * 480 * 3, (uint8_t*)SDRAM_BANK_ADDR);
+	for(uint32_t i = 0; i < 1000; i += 4)
+          {
+           
+            *(__IO uint32_t*) (SDRAM_BANK_ADDR + i) = 0x0;
+
+          }
 
   //brightness %
   TIM9->CCR1 = 100;	
@@ -135,6 +141,8 @@ int main(void)
   HAL_DMA2D_ConfigDeadTime(&hdma2d, 100);
   HAL_DMA2D_EnableDeadTime(&hdma2d);
 
+  QspiReadID();
+  QspiReadID();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -155,30 +163,23 @@ int main(void)
     if(flag_end_of_transmit) {
       //0 - start addr, 20 * 64KB = 1,28MB
       BSP_QSPI_Erase_Block_64KB(0, 20);
-      
+	  BSP_QSPI_Erase_Block_64KB(0, 20);
       for(uint32_t i = 0; i < 800 * 480 * 3;) {
         QspiWriteData(i, 256, (uint8_t*)(SDRAM_BANK_ADDR + i)); //write in flash memory	(256 bytes max in one transaction)
         i += 256;
       }
       flag_end_of_transmit = 0;
     }
-
-    draw_font8x14("16.01.20, 14:40", 332, 389, 0x00FFFFFF, 0x00585D73);
+/*
+    //draw_font8x14("16.01.20, 14:40", 332, 389, 0x00FFFFFF, 0x00585D73);
     static uint8_t pos = '0';
-    draw_font8x14((char *)&(pos), 336, 408, 0x00FFFFFF, 0x00585D73);
+    //draw_font8x14((char *)&(pos), 336, 408, 0x00FFFFFF, 0x00585D73);
     pos++;
     if(pos > '9') pos = '0';
-    //pos += 15;
-    //draw_font8x14("NPK Kontakt", pos, 0, 0x000000FF, 0x00FFFFFF);
+	*/
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    /*for (uint32_t i = 0; i < 800*480*3; i++)
-    {
-	    *(__IO uint8_t*) (SDRAM_BANK_ADDR + i + 1 + 800*480*3) = 0xAA;
-    }*/
-    //uint8_t pData = 0;
-    //QspiWaitStatusReg1_BUSY(2000);
     //uart xmodem
     uart_xmodem_receive();
   }
@@ -458,7 +459,7 @@ static void MX_UART7_Init(void)
   huart7.Init.OverSampling = UART_OVERSAMPLING_16;
   huart7.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
   huart7.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
-  if (HAL_RS485Ex_Init(&huart7, UART_DE_POLARITY_HIGH, 0, 0) != HAL_OK)
+  if (HAL_RS485Ex_Init(&huart7, UART_DE_POLARITY_HIGH, 31, 0) != HAL_OK)
   {
     Error_Handler();
   }

@@ -26,10 +26,48 @@ uint8_t QSPI_WriteEnable()
   }
   GPIOC->BSRR |= (GPIO_PIN_11); //CS Off
 
-  HAL_Delay(1);
+  //HAL_Delay(1);
 
   QspiWaitStatusReg1_BUSY(100);
 
+  return HAL_OK;
+}
+
+//READ SERIAL FLASH DISCOVERY PARAMETER
+uint8_t QspiReadID(void)
+{
+  QSPI_CommandTypeDef s_command = {0};
+ 
+  /* Initialize the read command */
+  s_command.InstructionMode  = QSPI_INSTRUCTION_1_LINE;
+  s_command.Instruction    = 0x9F;  //READ JEDEC ID
+  s_command.AddressMode    = QSPI_ADDRESS_NONE;
+  s_command.Address      = 0;
+  s_command.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
+  s_command.AlternateBytes   = 0;
+  s_command.AlternateBytesSize = 0;
+  s_command.DataMode      = QSPI_DATA_1_LINE;
+  s_command.DummyCycles    = 0  ;
+  s_command.NbData       = 3;
+  s_command.DdrMode      = QSPI_DDR_MODE_DISABLE;
+  s_command.DdrHoldHalfCycle  = QSPI_DDR_HHC_ANALOG_DELAY;
+  s_command.SIOOMode      = QSPI_SIOO_INST_EVERY_CMD;
+
+  GPIOC->BSRR |= (GPIO_PIN_11 << 16);   //CS On
+
+  /* Configure the command */
+  if (HAL_QSPI_Command(&hqspi, &s_command, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
+    return HAL_ERROR;
+  }
+
+  uint8_t pData[20] = {0};
+  /* Reception of the data */
+  if (HAL_QSPI_Receive(&hqspi, pData, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
+    return HAL_ERROR;
+  }
+
+  GPIOC->BSRR |= (GPIO_PIN_11); //CS Off
+ 
   return HAL_OK;
 }
 
@@ -110,8 +148,8 @@ uint8_t QspiWriteData(uint32_t address, uint32_t size, uint8_t* pData)
   }
   GPIOC->BSRR |= (GPIO_PIN_11); 
 
-  HAL_Delay(3); //page program write 3ms max
-
+  //HAL_Delay(3); //page program write 3ms max
+  QspiWaitStatusReg1_BUSY(3);
   return HAL_OK;
 }
 
@@ -147,8 +185,8 @@ uint8_t BSP_QSPI_Erase_Sector(uint32_t BlockAddress)
   }  
   GPIOC->BSRR |= (GPIO_PIN_11);
 
-  HAL_Delay(400);  //Sector erase MAX time = 400ms
-
+  //HAL_Delay(400);  //Sector erase MAX time = 400ms
+  QspiWaitStatusReg1_BUSY(400);
   return HAL_OK;
 }
 
